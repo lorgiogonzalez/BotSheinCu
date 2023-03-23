@@ -63,13 +63,16 @@ class Shein(Scraping):
         return results
 
     def ScrapListSku(self,url):
-        self.SetUrl(url)
-        nombres= self.ScrapingUnicElement([(By.CSS_SELECTOR,"div.group-user-info")])[0]
-        results = self.ScrapingOnePageAllElemet((By.CSS_SELECTOR,"a.S-product-item__img-container"),["data-sku"])
-        result = nombres+"\n"
-        for res in results:
-            result = result + res[0]+ "\n"
-        return result
+        try:
+            self.SetUrl(url)
+            nombres= self.ScrapingUnicElement([(By.CSS_SELECTOR,"div.group-user-info")])[0]
+            results = self.ScrapingOnePageAllElemet((By.CSS_SELECTOR,"a.S-product-item__img-container"),["data-sku"])
+            result = nombres+"\n"
+            for res in results:
+                result = result + res[0]+ "\n"
+            return result
+        except Exception as e:
+            return "Hubo Algun Error" + e
     
     def ParserTipe(self,url,tipe):
         if(tipe==TipoSMS.Articulo):
