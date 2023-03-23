@@ -57,6 +57,16 @@ class Scraping:
     def SetUrl(self,url) -> None:
         self.url=url
         self.driver.get(url)
+        mark=False
+        if "shein" in url:
+            try:
+                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i")))
+            except TimeoutException:
+                mark=True
+            if not mark:
+                self.driver.find_element(By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i").click()
+                time.sleep(1)
+
         
     
     def Error(self):
@@ -81,18 +91,10 @@ class Scraping:
         tipoPrincipal,elementPrincipal=Principal
         disable=None
         while disable==None:
-            mark=False
             try:
                 self.wait.until(EC.visibility_of_element_located(Principal))
             except TimeoutException:
                 return self.Error()
-            try:
-                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i")))
-            except TimeoutException:
-                mark=True
-                print("No Salio")
-            if not mark:
-                self.driver.find_element(By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i").click()
             try:
                 self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"span.sui-pagination__next.sui-pagination__btn")))
                 prox = self.driver.find_element(By.CSS_SELECTOR,"span.sui-pagination__next.sui-pagination__btn")
