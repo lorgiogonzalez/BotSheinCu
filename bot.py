@@ -1,12 +1,14 @@
 from config import *
+import os
 import telebot
 from SheinScraping import Shein,TipoSMS,time
 from SimpleInvoiceScraping import Simpleinvoice
 from telebot.types import ReplyKeyboardMarkup
 from telebot.types import ForceReply
 from flask import Flask,request
-from pyngrok import ngrok,conf
 from waitress import serve
+from config import APP
+import threading
 
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
@@ -122,6 +124,17 @@ def cmd_message(message):
     url,tipo = TipeMessage(message.text)
     bot.reply_to(message,shein.ParserTipe(url,tipo))
 
+def polling():
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.infinity_polling()
+
+def arrancar_web_server():
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.set_webhook(url=f'https://{APP}.herokuapp.com')
+    serve(web_server,host='0.0.0.0',port=int(os.environ.get("PORT",5000)))
+
 if __name__ == '__main__':
     #bot.set_my_commands([
     #    telebot.types.BotCommand("/AdminListSKU","Solo Para Admin Listar SKU de una Lista de shein"),
@@ -130,17 +143,12 @@ if __name__ == '__main__':
         #telebot.types.BotCommand("/Articulo","De un Articulo de shein el Precio Final en Cuba")
     #])
     print('Iniciando bot')
-    conf.get_default().config_path = "./config_ngrok.yml"
-    conf.get_default().region="us"
-    ngrok.set_auth_token(NGROK_TOKEN)
-    ngrok_tunel=ngrok.connect(5000,bind_tls=True)
-    ngrok_url=ngrok_tunel.public_url
-    bot.remove_webhook()
-    time.sleep(1)
-    bot.set_webhook(url=ngrok_url)
-    serve(web_server,host="0.0.0.0",port=5000)
-    #web_server.run(host="0.0.0.0",port=5000)
-    #bot.infinity_polling()
+    if os.environ.get("DYNO_RAM"):
+        hilo = threading.Thread(name="hilo_web_server",target=arrancar_web_server)
+    else:
+        hilo = threading.Thread(name="hilo_polling",target=polling)
+    hilo.start()
+    print("BOT INICIADO")
     print('Fin')
 
 
