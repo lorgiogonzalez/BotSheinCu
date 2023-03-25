@@ -1,6 +1,6 @@
 from Scraping import Scraping,time,EC,TimeoutException,webdriver
 from selenium.webdriver.common.by import By
-from utils import TipoSMS
+from utils import TipoSMS,ListadeArticulos,PrecioxLibra
 from config import USERSEHIN,PASSWORSEHIN
 class Shein(Scraping):
     def __init__(self) -> None:
@@ -25,20 +25,41 @@ class Shein(Scraping):
 
     def ScrapArticulo(self,url):
         self.SetUrl(url)
-        params=[(By.CSS_SELECTOR,"h1.product-intro__head-name"),(By.CSS_SELECTOR,"div.original"),(By.CSS_SELECTOR,"div.discount"),(By.CSS_SELECTOR,"div.product-intro__head-sku")]
+        params=[(By.CSS_SELECTOR,"h1.product-intro__head-name"),(By.CSS_SELECTOR,"div.original"),(By.CSS_SELECTOR,"div.discount"),(By.CSS_SELECTOR,"div.product-intro__head-sku"),(By.CSS_SELECTOR,"div.bread-crumb.j-bread-crumb")]
         result=self.ScrapingUnicElement(params)
         nombre = result[0]
         precioOriginal=result[1]
         precioDes=result[2]
         Sku=result[3]
-        print(nombre,precioDes,precioOriginal,Sku)
+        guia=result[4]
+        pesoProp = 0
+        mark=False
+        for nombres, peso in ListadeArticulos:
+            if mark:
+                break
+            for nombrex in nombres:
+                if nombrex in guia.lower():
+                    pesoProp=peso
+                    mark=True
+                    break
+        if not mark:
+            pesoProp =0.5
+
         if(nombre is None or (precioOriginal is None and precioDes is None) or Sku is None):
             return self.Error()
         else:
             precio = precioOriginal if(precioDes is None) else precioDes
-            return  f"{nombre}"\
-                    f"{precio}"\
-                    f"{Sku}"
+            precioFinal= round(float(precio[1:]) + (pesoProp* PrecioxLibra) ,2)
+            if mark:
+                return  f"El Nombre es:{nombre} \n"\
+                    f"El Precio del Articulo es:{precio} \n"\
+                    f"El Peso Promedio es :{pesoProp}\n"\
+                    f"Para un Valor Total de: ${precioFinal}" 
+            return  f"El Nombre es:{nombre} \n"\
+                    f"El Precio del Articulo es:{precio} \n"\
+                    f"El Peso Promedio No lo tenemos registrado y le asignamos :{pesoProp}\n"\
+                    f"Para un Valor Total de: ${precioFinal}" 
+                    
 
   #<a class="S-product-item__img-container j-expose__product-item-img" href="/LED-Water-Resistant-Electronic-Watch-p-12791872-cat-3301.html?mallCode=1" 
   # tabindex="0" aria-label="LED Water Resistant Electronic Watch" target="_self" da-event-click="2-3-1" da-event-expose="2-3-2" index="0" data-spu="" 
@@ -66,13 +87,16 @@ class Shein(Scraping):
         try:
             self.SetUrl(url)
             nombres= self.ScrapingUnicElement([(By.CSS_SELECTOR,"div.group-user-info")])[0]
-            results = self.ScrapingOnePageAllElemet((By.CSS_SELECTOR,"a.S-product-item__img-container"),["data-sku"])
+            results = self.ScrapingOnePageAllElemet((By.CSS_SELECTOR,"a.S-product-item__img-container"),["aria-label"])
             result = nombres+"\n"
             for res in results:
+                if res[0]==None:
+                    result = result + "NONE" +"\n"
+                    continue
                 result = result + res[0]+ "\n"
             return result
         except Exception as e:
-            return "Hubo Algun Error" + e
+            return "Hubo Algun Error" + str(e)
     
     def ParserTipe(self,url,tipe):
         if(tipe==TipoSMS.Articulo):
