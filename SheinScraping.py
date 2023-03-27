@@ -8,12 +8,13 @@ class Shein(Scraping):
 
     def Login(self):
         self.SetUrl("https://us.shein.com/user/auth/login?direction=nav&from=navTop")
-        self.LoginBase(By.CSS_SELECTOR,By.CSS_SELECTOR,
+        if not self.LoginBase(By.CSS_SELECTOR,By.CSS_SELECTOR,
                        "body > div.c-outermost-ctn.j-outermost-ctn > div.container-fluid-1200.j-login-container.she-v-cloak-none > div > div > div > div:nth-child(2) > div.page-login__container > div:nth-child(1) > div > div.page__login_mergeLoginItem > div:nth-child(1) > div > div.input_filed-wrapper > div > div > input",
                         "body > div.c-outermost-ctn.j-outermost-ctn > div.container-fluid-1200.j-login-container.she-v-cloak-none > div > div > div > div:nth-child(2) > div.page-login__container > div:nth-child(1) > div > div.page__login_mergeLoginItem > div:nth-child(2) > div > div > input",
                         USERSEHIN,PASSWORSEHIN,By.CSS_SELECTOR,
                         "body > div.c-outermost-ctn.j-outermost-ctn > div.container-fluid-1200.j-login-container.she-v-cloak-none > div > div > div > div:nth-child(2) > div.page-login__container > div:nth-child(1) > div > div.page__login_mergeLoginItem > div.actions > div:nth-child(1) > button"
-                       )
+                       ):
+            return 
         time.sleep(1)
         try:
             self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"div.skip")))
@@ -75,6 +76,7 @@ class Shein(Scraping):
         return result
     
     def ScrapListDatos(self,url):
+        self.Login()
         self.SetUrl(url)
         results = self.ScrapingOnePageAllElemet((By.CSS_SELECTOR,"a.S-product-item__img-container"),["aria-label","data-us-price"])
  

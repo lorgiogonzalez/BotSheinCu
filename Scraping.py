@@ -19,7 +19,7 @@ class Scraping:
         options = Options()
         user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
         options.add_argument(f"user-agent={user_agent}")
-        options.add_argument("--headless")
+        #options.add_argument("--headless")
         options.add_argument("--disable-web-security")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-extensions")
@@ -118,21 +118,23 @@ class Scraping:
                 Elementos.append(partes)
             if disable==None:
                 prox.click()
+                time.sleep(1)
         return Elementos
 
     def LoginBase(self,typeUser,typePasword,ByIdUser,ByIdPassword,User,Password,typeSub,submit):
         try:
             self.wait.until(EC.visibility_of_element_located((typeUser,ByIdUser)))
         except TimeoutException:
-            return self.Error()
+            return False
         self.driver.find_element(typeUser,ByIdUser).send_keys(User)
         time.sleep(1)
         try:
             self.wait.until(EC.visibility_of_element_located((typePasword,ByIdPassword)))
         except TimeoutException:
-            return self.Error()
+           return False
         self.driver.find_element(typePasword,ByIdPassword).send_keys(Password)
         time.sleep(1)
         self.driver.find_element(typeSub,submit).click()
+        return True
         
 
