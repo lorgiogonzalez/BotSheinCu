@@ -14,11 +14,14 @@ import threading
 import requests
 import time
 from os import remove
+import cv2
+import pytesseract
+import platform
 
 chunk_size=2000
 N_RES_PAG=15
 MAX_ANCHO_ROW=8
-DIR={"Datos":"./Datos/"}
+DIR={"Datos":"./Datos/","Documents":"./documents/"}
 for key in DIR:
     try:
         os.mkdir(key)
@@ -310,6 +313,84 @@ def GuardarLinks(message):
     msg = bot.send_message(message.chat.id,"Envie Los link de la lista o escriba /fin para terminar",reply_markup=markup)
     bot.register_next_step_handler(msg,GuardarLinks)
 
+def SearByText(message):
+    users = QueryToApi(f'/api/Buy/GetItemBuySKU/{message.text}',None,"GET")
+    users = list(users)
+    markup=ForceReply()
+    if(len(users)==0):
+        msg = bot.send_message(message.chat.id,"Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar porque ese sku no fue enconrado",reply_markup=markup)
+        bot.register_next_step_handler(msg,LeerFoto) 
+    else:
+        mensaje = "<b> Los Nombres Son: \n</b>"
+        for user in users:
+            mensaje+= f'<b>{user}</b>\n'
+        bot.reply_to(message,mensaje,parse_mode="html")
+        msg = bot.send_message(message.chat.id,"Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
+        bot.register_next_step_handler(msg,LeerFoto)
+
+def LeerFoto(message):
+    markup=ForceReply()
+    try:
+        if(message.text=="/fin"):
+            return
+        if(message.text=="/text"):
+            msg = bot.send_message(message.chat.id,"Escriba el sku por favor",reply_markup=markup)
+            bot.register_next_step_handler(msg,SearByText)
+            return            
+    except:
+        pass
+    try:
+        ruta=bot.get_file(message.document.file_id).file_path
+        url=f'https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{ruta}'
+        myfile = requests.get(url)
+        open('./'+ruta, 'wb').write(myfile.content)
+
+    # Cargar imagen
+        img = cv2.imread('./'+ruta)
+
+    # Convertir imagen a escala de grises
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Aplicar umbral para convertir a imagen binaria
+        threshold_img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        sistema = platform.system()
+        if(sistema=="Windows"):
+            pytesseract.pytesseract.tesseract_cmd = r'D:\Tessaract\tesseract.exe'
+
+    # Pasar la imagen por pytesseract
+        text = pytesseract.image_to_string(threshold_img)
+
+        texts= text.split()
+        SKU=""
+
+        for tex in texts:
+            if len(text)>=16:
+                SKU=tex
+
+        SKUFINAL=""
+        for i in range(len(SKU)):
+            num = ord(SKU[i])
+            if((num>=48 and num <=57) or (num>=65 and num<=90 ) or (num>=97 and num<=122)):
+                SKUFINAL=SKUFINAL+SKU[i]
+        print(SKUFINAL)
+        remove('./'+ruta)
+
+        users = QueryToApi(f'/api/Buy/GetItemBuySKU/{SKUFINAL}',None,"GET")
+        users = list(users)
+        
+        if(len(users)==0):
+            msg = bot.send_message(message.chat.id,"Escriba el sku por favor de la foto no fue posible encontrarlo",reply_markup=markup)
+            bot.register_next_step_handler(msg,SearByText) 
+        else:
+            mensaje = "<b> Los Nombres Son: \n</b>"
+            for user in users:
+                mensaje+= f'<b>{user}</b>\n'
+            bot.reply_to(message,mensaje,parse_mode="html")
+            msg = bot.send_message(message.chat.id,"Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
+            bot.register_next_step_handler(msg,LeerFoto)
+    except:
+        msg = bot.send_message(message.chat.id,"Hubo error con lo que envio Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
+        bot.register_next_step_handler(msg,LeerFoto)
 
 
 
@@ -366,7 +447,6 @@ def respuesta_botones_inline(call):
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         ProximoDesdeTalla(cid)
     if "Cantidad" in call.data:
-        
         ProximoDesdeCantidad(cid)
 
     if "NO" in call.data:
@@ -420,6 +500,16 @@ def cmd_UpdatePesos(message):
     msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
     bot.register_next_step_handler(msg,GuardarPesos)
 
+@bot.message_handler(commands=['searchitem'])
+def cmd_UpdatePesos(message):
+    if(not message.chat.id in IDS):
+        bot.reply_to(message,"No Puede Usar Dicho Comando") 
+        return
+    mensaje="Envie una foto o escriba /text para enviarlo escrito o /fin para terminar"
+    markup=ForceReply()
+    msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
+    bot.register_next_step_handler(msg,LeerFoto)
+
     
 def MostrarPagina(lista,cid,pag=0,mid=None):
     markup = InlineKeyboardMarkup(row_width=MAX_ANCHO_ROW)
@@ -458,6 +548,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/createbuy","CreateBuy"),
         telebot.types.BotCommand("/stop","Para Parar Cualquier Secuencia de Ejecucuion"),
         telebot.types.BotCommand("/updatepesos","Actualizar Pesos Aproximados"),
+        telebot.types.BotCommand("/searchitem","BuscarArticulo"),
         telebot.types.BotCommand("/getpdf","Escriba el numero de la compra")
     ])
     print('Iniciando bot')
