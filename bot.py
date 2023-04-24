@@ -14,7 +14,7 @@ import threading
 import requests
 import time
 from os import remove
-#import cv2
+import cv2
 import pytesseract
 import platform
 
