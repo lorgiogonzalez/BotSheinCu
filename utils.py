@@ -21,15 +21,20 @@ ListadeArticulos=[(["bañador","bikini"],0.61),(["bragas","tangas"],0.03),(["pez
                   (["fundas"],0.08),(["protectores pantalla"],0.11),(["botellas de agua"],0.5),(["reloj"],0.25)
                   ]
 
-Comentario ="Somos SHEINcu lleguese a nuestra perfil en instagram @she.incuba\n"\
-            "Aunque no compre, unase a nosotros https://instagram.com/stories/she.incuba/3065949343825516413?utm_source=ig_story_item_share&igshid=MDJmNzVkMjY=  \n"\
-            "Estamos Regalando una Prenda todas las semanas y otras sorpresas con proyectos de fiestas\n"\
-            "brindamos la oportunidad de encargar cuando usted quiera, TODOS LOS DIAS RECIBIMOS PEDIDOS Y ENVIOS A CUBA TODAS LAS SEMANAS\n"\
-            "cobramos la libra a 8.99 usd \n" \
-            "LOS MISMOS PRECIOS DE SHEIN \n" \
-            "Para conocer más acerca de nuestros servicios escríbenos  por WhatsApp al 59709888 (no revisamos mucho facebook)"\
+Comentario ="‼Somos SHEIN.CU y tenemos los mejores precios de artículos SHEIN en Cuba"\
+"Accede a nuestro catálogo pinchando el enlace https://drive.google.com/drive/folders/12eKcKuh079UcH8n5US7fjOO4ZjjuFFxO"\
+"‼Además hacemos encargos y tenemos una super oferta por el día de las madres : durante los próximos 5 días la libra será a razón de 7.5 usd  "\
+"Escríbenos por WhatsApp al 59709889 para más información o una a nosotros al https://www.instagram.com/p/CqTLjQHJKO3/?utm_source=ig_web_copy_link \n"
+
+#"Somos SHEINcu lleguese a nuestra perfil en instagram @she.incuba"\
+#            " Aunque no compre, unase a nosotros https://www.instagram.com/p/CqTLjQHJKO3/?utm_source=ig_web_copy_link"\
+#            " Estamos Regalando una Prenda todas las semanas y otras sorpresas con proyectos de fiestas"\
+#            " brindamos la oportunidad de encargar cuando usted quiera, TODOS LOS DIAS RECIBIMOS PEDIDOS Y ENVIOS A CUBA TODAS LAS SEMANAS"\
+#            " cobramos la libra a 8.99 usd" \
+#            " LOS MISMOS PRECIOS DE SHEIN" \
+#            " Para conocer más acerca de nuestros servicios escríbenos  por WhatsApp al 59709888 (no revisamos mucho facebook)\n"\
            
 
 
 
-ImportantWordsGroup=["shein","ropa","cositas"]
+ImportantWordsGroup=["shein"]

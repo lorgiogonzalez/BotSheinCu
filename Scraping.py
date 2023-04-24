@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.by import By
 import time
 from selenium_stealth import stealth
@@ -19,6 +20,7 @@ class Scraping:
         options = Options()
         user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
         options.add_argument(f"user-agent={user_agent}")
+        options.add_argument("refer=https://google.com")
         #options.add_argument("--headless")
         options.add_argument("--disable-web-security")
         options.add_argument("--disable-dev-shm-usage")
@@ -38,6 +40,18 @@ class Scraping:
         'ignore-certificate-errors',
         'enable-logging'
         ]
+        #options.add_argument("--proxy-server=http://user:")
+        #proxy = Proxy()
+        #proxy.proxy_type = ProxyType.MANUAL
+        #proxy.http_proxy = "104.144.171.53:4444"
+        #proxy.socks_proxy = "104.144.171.53:4444"
+        #proxy.ssl_proxy = "104.144.171.53:4444"
+        #proxy.socks_password ="2qI0bcF9"
+        #proxy.socks_username="dbea73fcb0"
+        #proxy.socks_version = 5
+        #capabilities = webdriver.DesiredCapabilities.CHROME
+        #proxy.add_to_capabilities(capabilities)
+        
         options.add_experimental_option("excludeSwitches",exp_opt)
         service= Service(which("chromedriver"))
         self.driver= webdriver.Chrome(service=service,options=options)
@@ -58,14 +72,14 @@ class Scraping:
         self.url=url
         self.driver.get(url)
         mark=False
-        if "shein" in url:
-            try:
-                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i")))
-            except TimeoutException:
-                mark=True
-            if not mark:
-                self.driver.find_element(By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i").click()
-                time.sleep(1)
+        #if "shein" in url:
+        #    try:
+        #        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i")))
+        #    except TimeoutException:
+        #        mark=True
+        #    if not mark:
+        #        self.driver.find_element(By.CSS_SELECTOR,"body > div.j-popup-us > div > div > div.c-modal > div > div > div.modal-header > i").click()
+        #        time.sleep(1)
 
         
     
