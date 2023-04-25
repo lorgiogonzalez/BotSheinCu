@@ -20,7 +20,7 @@ import platform
 
 chunk_size=2000
 N_RES_PAG=15
-MAX_ANCHO_ROW=8
+MAX_ANCHO_ROW=5
 DIR={"Datos":"./Datos/","Documents":"./documents/"}
 for key in DIR:
     try:
@@ -146,6 +146,12 @@ def Concluir(chatid):
     datos=pickle.load(open(f'{DIR["Datos"]}{chatid}','rb'))
     print(datos["result"]["user"])
     print(datos["result"]["items"])
+    for i in range(len(datos["result"]["items"])):
+        if not datos["result"]["items"][i]["tipo"]== '':
+            datos["result"]["items"][i]["tipo"]=" ".join(datos["result"]["items"][i]["tipo"])
+        if not datos["result"]["items"][i]["talla"]== '':
+            datos["result"]["items"][i]["talla"]=" ".join(datos["result"]["items"][i]["talla"])
+
     result = QueryToApi(f'/api/Buy/BuyItemsForUser/?userID={datos["result"]["user"]}',{"items":datos["result"]["items"],"discount":0},"POST")
     if result== None:
         bot.send_message(chatid,"ERROR AL CREAR COMPRA")
@@ -207,6 +213,8 @@ def EmpezarItem(chatid):
         Concluir(chatid)
         return
     item=datos["items"][positem]
+    markup=ForceReply()
+    bot.send_message(chatid,f'<b>{item["name"]}</b> con id:{item["idShein"]}',parse_mode="html")
     if(item["tipos"]==None):
         ProximoDesdeTipo(chatid)
         return
@@ -219,13 +227,13 @@ def EmpezarItem(chatid):
             botones.append(InlineKeyboardButton(tipo,callback_data=f'Select Tipo {tipo}'))
         botones.append(InlineKeyboardButton("Default",callback_data='Select Tipo  '))
         markup.add(*botones)
-        bot.send_message(chatid,f'<b>{item["name"]}</b>',reply_markup=markup,parse_mode="html",disable_web_page_preview=True)
+        bot.send_message(chatid,f'Elija El Tipo',reply_markup=markup,parse_mode="html",disable_web_page_preview=True)
     else:
         ProximoDesdeTipo(chatid)
 
 def GuardarPesos(message):
     datos=[]
-    texto=message.text.split('\n')
+    texto=message.text.split('@')
     for text in texto:
         tex = text.split(' ')
         while tex.count(''):
@@ -240,14 +248,15 @@ def GuardarPesos(message):
 
 
 def RevisarPesosAporximados(chatid,items):
-    mensaje="Por Favor Devuelva un Mensaje donde Cada Linea Abarque una palabra clave y el peso promedio separado por espacio \n Por Ejemplo: \n Zapatos 0.50\n Cartera 0.20\n Lor Articulos son:\n"
+    mensaje="Por Favor Devuelva un Mensaje donde Cada Pareja Este dividida por un @ una palabra clave y el peso promedio separado por espacio \n Por Ejemplo: \n Zapatos 0.50 @ Cartera 0.20\n Lor Articulos son:\n"
     pos=[]
     for i in range(len(items)):
         if(items[i]["weight"]==0):
-            mensaje+=f'<b>{items[i]["name"]}</b> \n'
+            mensaje+=f'<b>{items[i]["name"]}</b> en {items[i]["category"]} cetegoria\n'
             pos.append(i)
     if len(pos)==0:
         EmpezarItem(chatid)
+        return
     datos=pickle.load(open(f'{DIR["Datos"]}{chatid}','rb'))
     datos["Posiciones"]=pos
     pickle.dump(datos,open(f'{DIR["Datos"]}{chatid}','wb'))
@@ -259,6 +268,7 @@ def RevisarPesosAporximados(chatid,items):
 
 def SeleccionarTiposyTallas(chatid,linksfinales,datos):
     items = GetItems(linksfinales)
+    time.sleep(5)
     datos["items"]=items
     datos["result"]["items"]=[]
     for item in items:
@@ -439,12 +449,16 @@ def respuesta_botones_inline(call):
 
     if "Select Tipo" in call.data:
         num=datos["num"]
-        datos["result"]["items"][num]["tipo"]=call.data.split()[2]
+        valores = call.data.split()
+        if(len(valores)==2):
+            datos["result"]["items"][num]["tipo"]=''
+        else:
+            datos["result"]["items"][num]["tipo"]=" ".join(valores[2:])
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         ProximoDesdeTipo(cid)
     if "Select Talla"in call.data:
         num = datos["num"]
-        datos["result"]["items"][num]["talla"]=call.data.split()[2]
+        datos["result"]["items"][num]["talla"]=" ".join(call.data.split()[2:])
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         ProximoDesdeTalla(cid)
     if "Cantidad" in call.data:
@@ -559,7 +573,7 @@ if __name__ == '__main__':
         hilo = threading.Thread(name="hilo_polling",target=polling)
     hilo.start()
     print("BOT INICIADO")
-    bot.remove_webhook()
-    time.sleep(1)
-    bot.infinity_polling()
+    #bot.remove_webhook()
+    #time.sleep(1)
+    #bot.infinity_polling()
     print('Fin')
