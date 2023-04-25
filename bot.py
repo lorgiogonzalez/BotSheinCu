@@ -217,6 +217,7 @@ def EmpezarItem(chatid):
         botones=[]
         for tipo in tipos.keys():
             botones.append(InlineKeyboardButton(tipo,callback_data=f'Select Tipo {tipo}'))
+        botones.append(InlineKeyboardButton("Default",callback_data='Select Tipo  '))
         markup.add(*botones)
         bot.send_message(chatid,f'<b>{item["name"]}</b>',reply_markup=markup,parse_mode="html",disable_web_page_preview=True)
     else:
