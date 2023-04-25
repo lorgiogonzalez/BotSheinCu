@@ -567,11 +567,11 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/getpdf","Escriba el numero de la compra")
     ])
     print('Iniciando bot')
-    if os.environ.get("DYNO_RAM"):
-        hilo = threading.Thread(name="hilo_web_server",target=arrancar_web_server)
-    else:
-        hilo = threading.Thread(name="hilo_polling",target=polling)
-    hilo.start()
+    #if os.environ.get("DYNO_RAM"):
+    #    hilo = threading.Thread(name="hilo_web_server",target=arrancar_web_server)
+    #else:
+    #    hilo = threading.Thread(name="hilo_polling",target=polling)
+    #hilo.start()
     print("BOT INICIADO")
     #bot.remove_webhook()
     #time.sleep(1)
