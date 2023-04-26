@@ -31,7 +31,6 @@ Users=[]
 Items=[]
 ItemSelect=[]
 
-
 urlApi="http://54.162.178.246:5163"
 #urlApi="https://localhost:7000"
 headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MjExMDExMCwiZXhwIjoxNjkwNzUwMTEwLCJpYXQiOjE2ODIxMTAxMTB9.2b1JcI9hki86F2O545tjmveG71QOGV89IUPOYi8eo38",
@@ -117,6 +116,8 @@ def GetUsers(user_name):
     return alls
 
 def CreateUser(message):
+    if(message.text=='/stop'):
+        return
     cid=message.chat.id
     result = QueryToApi("/api/usuarios/NewUsuarioPorDefecto",message.text,"POST")
     if result == None:
@@ -146,13 +147,10 @@ def Concluir(chatid):
     datos=pickle.load(open(f'{DIR["Datos"]}{chatid}','rb'))
     print(datos["result"]["user"])
     print(datos["result"]["items"])
-    for i in range(len(datos["result"]["items"])):
-        if not datos["result"]["items"][i]["tipo"]== '':
-            datos["result"]["items"][i]["tipo"]=" ".join(datos["result"]["items"][i]["tipo"])
-        if not datos["result"]["items"][i]["talla"]== '':
-            datos["result"]["items"][i]["talla"]=" ".join(datos["result"]["items"][i]["talla"])
 
     result = QueryToApi(f'/api/Buy/BuyItemsForUser/?userID={datos["result"]["user"]}',{"items":datos["result"]["items"],"discount":0},"POST")
+    data={}
+    pickle.dump(data,open(f'{DIR["Datos"]}{chatid}','wb'))
     if result== None:
         bot.send_message(chatid,"ERROR AL CREAR COMPRA")
     else:
@@ -191,6 +189,8 @@ def ProximoDesdeTalla(chatid):
     bot.register_next_step_handler(msg,ProximoDesdeCantidad)
 
 def ProximoDesdeCantidad(message):
+    if(message.text=='/stop'):
+        return
     if(not str.isdigit(message.text)):
         ProximoDesdeTalla(message.chat.id)
     else:
@@ -232,6 +232,8 @@ def EmpezarItem(chatid):
         ProximoDesdeTipo(chatid)
 
 def GuardarPesos(message):
+    if(message.text=='/stop'):
+        return
     datos=[]
     texto=message.text.split('@')
     for text in texto:
@@ -296,6 +298,8 @@ def TipeMessage(Mesage:str):
             return (str(Mesage[pos:posFinal+1]),tipo)
         
 def GuardarLinks(message):
+    if(message.text=='/stop'):
+        return
     datos=pickle.load(open(f'{DIR["Datos"]}{message.chat.id}','rb'))
     if(message.text.startswith('/')):
         if("stop" in message.text):
@@ -325,6 +329,8 @@ def GuardarLinks(message):
     bot.register_next_step_handler(msg,GuardarLinks)
 
 def SearByText(message):
+    if(message.text=='/stop'):
+        return
     users = QueryToApi(f'/api/Buy/GetItemBuySKU/{message.text}',None,"GET")
     users = list(users)
     markup=ForceReply()
@@ -340,6 +346,8 @@ def SearByText(message):
         bot.register_next_step_handler(msg,LeerFoto)
 
 def LeerFoto(message):
+    if(message.text=='/stop'):
+        return
     markup=ForceReply()
     try:
         if(message.text=="/fin"):
@@ -453,7 +461,7 @@ def respuesta_botones_inline(call):
         if(len(valores)==2):
             datos["result"]["items"][num]["tipo"]=''
         else:
-            datos["result"]["items"][num]["tipo"]=" ".join(valores[2:])
+            datos["result"]["items"][num]["tipo"]=" ".join(call.data.split()[2:])
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         ProximoDesdeTipo(cid)
     if "Select Talla"in call.data:
@@ -551,6 +559,10 @@ def MostrarPagina(lista,cid,pag=0,mid=None):
         mid = res.message_id
         datos={"pag":0,"lista":lista}
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
+
+@bot.message_handler(content_types=["text"])
+def cmd_message(message):
+    print(message.chat.id)
 
 #endregion
 
