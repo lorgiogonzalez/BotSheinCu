@@ -412,6 +412,11 @@ def LeerFoto(message):
         bot.register_next_step_handler(msg,LeerFoto)
 
 
+def UpdatePago(id,double):
+    return QueryToApi(f"/api/Buy/UpdatePago/{id}",double,"PATCH")
+
+def UpdatePesosP(id,double):
+    return QueryToApi(f"/api/Buy/UpdatePeso/{id}",double,"PATCH")
 
 
 
@@ -533,6 +538,29 @@ def cmd_UpdatePesos(message):
     msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
     bot.register_next_step_handler(msg,LeerFoto)
 
+@bot.message_handler(commands=['updatepago'])
+def cmd_updatepago(message):
+    if(not message.chat.id in IDS):
+        bot.reply_to(message,"No Puede Usar Dicho Comando") 
+        return
+    results= message.text.split()
+    result = UpdatePago(int(results[1]),float(results[2]))
+    if(result==200):
+        bot.send_message(message.chat.id,"Se Actualizo Correctamente")
+    else:
+        bot.send_message(message.chat.id,"No Se Actualizo Correctamente")
+
+@bot.message_handler(commands=['updatepesop'])
+def cmd_UpdatePesoP(message):
+    if(not message.chat.id in IDS):
+        bot.reply_to(message,"No Puede Usar Dicho Comando") 
+        return
+    results= message.text.split()
+    result = UpdatePesosP(int(results[1]),float(results[2]))
+    if(result==200):
+        bot.send_message(message.chat.id,"Se Actualizo Correctamente")
+    else:
+        bot.send_message(message.chat.id,"No Se Actualizo Correctamente")
     
 def MostrarPagina(lista,cid,pag=0,mid=None):
     markup = InlineKeyboardMarkup(row_width=MAX_ANCHO_ROW)
@@ -576,7 +604,9 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/stop","Para Parar Cualquier Secuencia de Ejecucuion"),
         telebot.types.BotCommand("/updatepesos","Actualizar Pesos Aproximados"),
         telebot.types.BotCommand("/searchitem","BuscarArticulo"),
-        telebot.types.BotCommand("/getpdf","Escriba el numero de la compra")
+        telebot.types.BotCommand("/getpdf","Escriba el numero de la compra"),
+        telebot.types.BotCommand("/updatepago","Escriba el numero de la compra y el pago separado por esapcios"),
+        telebot.types.BotCommand("/updatepesop","Escriba el numero de la compra y el peso separado por esapcios")
     ])
     print('Iniciando bot')
     if os.environ.get("DYNO_RAM"):
