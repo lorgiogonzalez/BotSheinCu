@@ -469,6 +469,7 @@ def respuesta_botones_inline(call):
             datos["result"]["items"][num]["tipo"]=" ".join(call.data.split()[2:])
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         ProximoDesdeTipo(cid)
+        return
     if "Select Talla"in call.data:
         num = datos["num"]
         datos["result"]["items"][num]["talla"]=" ".join(call.data.split()[2:])
@@ -476,20 +477,20 @@ def respuesta_botones_inline(call):
         ProximoDesdeTalla(cid)
     if "Cantidad" in call.data:
         ProximoDesdeCantidad(cid)
-
+        return
     if "NO" in call.data:
         datos["num"]+=1
         datos["positem"]+=1
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         EmpezarItem(cid)
-    
+        return
     if "SI" in call.data:
         copy=datos["items"][datos["positem"]]
         datos["num"]+=1
         datos["result"]["items"].insert(datos["num"],{"itemId":copy["idShein"],"cantidad":1,"tipo":"","talla":""})
         pickle.dump(datos,open(f'{DIR["Datos"]}{cid}','wb'))
         EmpezarItem(cid)
-
+        return
 @bot.message_handler(commands=['createbuy'])
 def cmd_CreateBuy(message):
     data={}
