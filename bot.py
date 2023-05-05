@@ -119,7 +119,7 @@ def CreateUser(message):
     if(message.text=='/stop'):
         return
     cid=message.chat.id
-    result = QueryToApi("/api/usuarios/NewUsuarioPorDefecto",message.text,"POST")
+    result = QueryToApi("/api/usuarios/NewUsuarioPorDefecto",{"userName":message.text},"POST")
     if result == None:
         bot.send_message(cid,"ERROR AL CREAR USUARIO")
         return
@@ -284,7 +284,7 @@ def SeleccionarTiposyTallas(chatid,linksfinales,datos):
 
 
 def TipeMessage(Mesage:str):
-    pos=Mesage.rfind("http")
+    pos=Mesage.find("http")
     if(pos==-1):
         return(Mesage,TipoSMS.NoUrl)
     else:
@@ -314,13 +314,11 @@ def GuardarLinks(message):
                     sms,tipo = TipeMessage(sp)
                     if tipo == TipoSMS.Articulo:
                         linksfinales.append(sms)
-        try:
+       
             
-            SeleccionarTiposyTallas(message.chat.id,linksfinales,datos)
-            return
-        except Exception as e:
-            bot.send_message(message.chat.id,"Hubo Algun Error "+ str(e))
+        SeleccionarTiposyTallas(message.chat.id,linksfinales,datos)
         return
+       
     link = message.text
     datos["urls"].append(link)
     pickle.dump(datos,open(f'{DIR["Datos"]}{message.chat.id}','wb'))
