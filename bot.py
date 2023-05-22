@@ -17,7 +17,7 @@ from os import remove
 import cv2
 import pytesseract
 import platform
-
+import re
 chunk_size=2000
 N_RES_PAG=15
 MAX_ANCHO_ROW=5
@@ -31,10 +31,10 @@ Users=[]
 Items=[]
 ItemSelect=[]
 
-urlApi="http://54.162.178.246:5163"
+urlApi="https://54.162.178.246:7163"
 #urlApi="https://localhost:7000"
 headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MjExMDExMCwiZXhwIjoxNjkwNzUwMTEwLCJpYXQiOjE2ODIxMTAxMTB9.2b1JcI9hki86F2O545tjmveG71QOGV89IUPOYi8eo38",
-#headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MjI3NzA0OCwiZXhwIjoxNjkwOTE3MDQ4LCJpYXQiOjE2ODIyNzcwNDh9.Rpo51395eitrx5DtRyMrgyhQutq8wwRgvUMG2K4ZLZk",
+#headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MzQ5NDQ4MCwiZXhwIjoxNjkyMTM0NDgwLCJpYXQiOjE2ODM0OTQ0ODB9.egdPym4nByY1EjnoIYFVGlGvRqFhLJCoWPOV0ps6V0s",
            "accept": "*/*",
            "Content-Type": "application/json"}
 
@@ -132,9 +132,8 @@ def CreateUser(message):
     return
 
 
-
 def GetItems(linksfinales):
-    result = QueryToApi("/api/Item/CreateListUrl",linksfinales,"POST")
+    result = QueryToApi("/api/Item/CreateListUrl",{"urls":linksfinales},"POST")
     if result== None:
         return {}
     alls = []
@@ -409,6 +408,191 @@ def LeerFoto(message):
         msg = bot.send_message(message.chat.id,"Hubo error con lo que envio Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
         bot.register_next_step_handler(msg,LeerFoto)
 
+def ActualizarDatos(Skus,Pesos,chatid):
+    Mensaje=""
+    datos=[]
+    for i in range(len(Skus)):
+        datos.append({"sku":Skus[i],"peso":Pesos[i]})
+
+    result = QueryToApi(f'/api/Item/UpdatePesos',datos,"POST")
+    try:
+        results= list(result)
+        if(len(results)==0):
+            bot.send_message(chatid,"Hubo Algun Error en la actualizacion")
+            return
+        for i in range(len(Skus)):
+            Mensaje+=Skus[i]+" "+Pesos[i]+" "+str(results[i])+"\n"
+        bot.send_message(chatid,Mensaje)
+    except:        
+        bot.send_message(chatid,"Hubo Algun Error en la actualizacion")
+        return       
+    
+
+def ActualizarBySMS(message):
+    if(message.text=='/fin'):
+        return
+    Skus=[]
+    Pesos=[]
+
+    for lin in message.text.split('\n'):
+        datos = lin.split()
+        Skus.append(datos[0])
+        Pesos.append(datos[1])
+    return ActualizarDatos(Skus,Pesos,message.chat.id)
+    
+
+def CrearMensaje(Skus,Pesos):
+    print(len(Skus), len(Pesos))
+    Mensaje=""
+    if(not (len(Skus)== len(Pesos))):
+        Mensaje= "Tiene un error el proceso\n Por favor reenviarnos el mensaje arreglado sin estas linea, solo los sku y los pesos, Los datos son los siguientes: \n"
+    else:
+        Mensaje="Los Datos que actualizaremos seran los siguientes\n"
+    for i in range(min(len(Skus),len(Pesos))):
+        Mensaje+=(Skus[i]+" "+Pesos[i]+"\n")
+    if(not (len(Skus)== len(Pesos))):
+        if(len(Skus)>len(Pesos)):
+            Mensaje+="Sobraron dichos Skus \n"
+            for i in range(len(Pesos),len(Skus)):
+                Mensaje+=(Skus[i]+"\n")
+        else:
+            Mensaje+="Sobraron dichos Pesos \n"
+            for i in range(len(Skus),len(Pesos)):
+                Mensaje+=(Pesos[i]+"\n")
+    return Mensaje
+
+def LeerFoto2(message):
+    if(message.text=='/stop'):
+        return
+    markup=ForceReply()
+    try:
+        if(message.text=="/fin"):
+            return
+        if(message.text=="/text"):
+            msg = bot.send_message(message.chat.id,"Escriba el sku por favor",reply_markup=markup)
+            bot.register_next_step_handler(msg,SearByText)
+            return            
+    except:
+        pass
+    try:
+        ruta=bot.get_file(message.document.file_id).file_path
+        url=f'https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{ruta}'
+        myfile = requests.get(url)
+        open('./'+ruta, 'wb').write(myfile.content)
+
+    # Cargar imagen
+        img = cv2.imread('./'+ruta)
+
+    # Convertir imagen a escala de grises
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Aplicar umbral para convertir a imagen binaria
+        threshold_img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        sistema = platform.system()
+        if(sistema=="Windows"):
+            pytesseract.pytesseract.tesseract_cmd = r'D:\Tessaract\tesseract.exe'
+
+    # Pasar la imagen por pytesseract
+        text = pytesseract.image_to_string(threshold_img)
+
+        
+        texts= text.split('\n')
+
+        SKUS=[]
+        Pesos=[]
+
+        separadores=[')','}']
+        for tex in texts:
+            if "commodity" in tex.lower() or "skc" in tex.lower() or "sku" in tex.lower():
+                SKUS.append(tex)
+            if "product weight" in tex.lower() or "roduct weight" in tex.lower() or "peso del producto" in tex.lower() or "peso" in tex.lower() or "peso del prod" in tex.lower()  or "so del prod" in tex.lower() or "l product" in tex.lower()  or "del prod" in tex.lower() or "eza inic" in tex.lower() :
+                Pesos.append(tex)
+
+        def ObtenerLosSKU(skus):
+            skusResults=[]
+            for sku in skus:
+                div=sku.split(':')
+                if(len(div)==1):
+                    div=div[0].split(')')
+                if(len(div)==1):
+                    div=div[0].split('}')
+                if(len(div)==1):
+                    continue
+                else:
+                    div=div[-1]
+                SKUFINAL=""
+                for i in range(len(div)):
+                    num = ord(div[i])
+                    if(div[i]==' ' and len(SKUFINAL)>=6):
+                        break
+                    if(num>=65 and num<=90 and len(SKUFINAL)>=6):
+                        break
+                    if((num>=48 and num <=57) or (num>=97 and num<=122)):
+                        SKUFINAL=SKUFINAL+div[i]
+                skusResults.append(SKUFINAL)
+            return skusResults
+
+        def ObtenerPesos(Pesos):
+            PesosFinales=[]
+            for peso in Pesos:
+                div=peso.split(':')
+                if(len(div)==1):
+                    div=div[0].split(')')
+                if(len(div)==1):
+                    div=div[0].split('}')
+                if(len(div)==1):
+                    continue
+                else:
+                    div=div[-1]
+                PesoFinal=""
+                for i in range(len(div)):
+                    num = ord(div[i])
+                    if(div[i]==' ' and len(PesoFinal)>=1):
+                        break
+                    if(num>=65 and num<=90 and len(PesoFinal)>=1 and div[i]!='O'):
+                        break
+                    if((num>=48 and num <=57 and len(PesoFinal)<3)):
+                        PesoFinal=PesoFinal+div[i]
+                if(PesoFinal!="" and PesoFinal!=" "):
+                    PesosFinales.append(PesoFinal)
+            return PesosFinales
+
+        #print(len(SKUS),len(Pesos))
+
+        SKUS=ObtenerLosSKU(SKUS)
+        Pesos=ObtenerPesos(Pesos)
+        #print(SKUS)
+        #print(Pesos)
+        remove('./'+ruta)
+
+        Mensaje=CrearMensaje(SKUS,Pesos)
+
+        
+        bot.send_message(message.chat.id,Mensaje)
+
+        if(len(SKUS)!=len(Pesos)):
+            msg = bot.send_message(message.chat.id,"Esperamos su mensaje o /fin para terminar",reply_markup=markup)
+            bot.register_next_step_handler(msg,ActualizarBySMS)
+        else:
+            ActualizarDatos(SKUS,Pesos,message.chat.id)
+
+
+        #users = QueryToApi(f'/api/Buy/GetItemBuySKU/{SKUFINAL}',None,"GET")
+        #users = list(users)
+        
+        #if(len(users)==0):
+        #    msg = bot.send_message(message.chat.id,"Escriba el sku por favor de la foto no fue posible encontrarlo",reply_markup=markup)
+        #    bot.register_next_step_handler(msg,SearByText) 
+        #else:
+        #    mensaje = "<b> Los Nombres Son: \n</b>"
+        #    for user in users:
+        #        mensaje+= f'<b>{user}</b>\n'
+        #    bot.reply_to(message,mensaje,parse_mode="html")
+        #    msg = bot.send_message(message.chat.id,"Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
+        #    bot.register_next_step_handler(msg,LeerFoto)
+    except Exception as ex:
+        msg = bot.send_message(message.chat.id,f"Hubo error {ex} con lo que envio Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
+        bot.register_next_step_handler(msg,LeerFoto2)
 
 def UpdatePago(id,double):
     return QueryToApi(f"/api/Buy/UpdatePago/{id}",double,"PATCH")
@@ -537,6 +721,16 @@ def cmd_UpdatePesos(message):
     msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
     bot.register_next_step_handler(msg,LeerFoto)
 
+@bot.message_handler(commands=['pesosfotos'])
+def cmd_UpdatePesos(message):
+    if(not message.chat.id in IDS):
+        bot.reply_to(message,"No Puede Usar Dicho Comando") 
+        return
+    mensaje="Envie una foto o escriba /fin para terminar"
+    markup=ForceReply()
+    msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
+    bot.register_next_step_handler(msg,LeerFoto2)
+
 @bot.message_handler(commands=['updatepago'])
 def cmd_updatepago(message):
     if(not message.chat.id in IDS):
@@ -605,7 +799,8 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/searchitem","BuscarArticulo"),
         telebot.types.BotCommand("/getpdf","Escriba el numero de la compra"),
         telebot.types.BotCommand("/updatepago","Escriba el numero de la compra y el pago separado por esapcios"),
-        telebot.types.BotCommand("/updatepesop","Escriba el numero de la compra y el peso separado por esapcios")
+        telebot.types.BotCommand("/updatepesop","Escriba el numero de la compra y el peso separado por esapcios"),
+        telebot.types.BotCommand("/pesosfotos","Actualizar segun la foto de shein"),
     ])
     print('Iniciando bot')
     if os.environ.get("DYNO_RAM"):
