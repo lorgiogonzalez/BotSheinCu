@@ -197,7 +197,7 @@ def ProximoDesdeCantidad(message):
         num = datos["num"]
         positem=datos["positem"]
         datos["result"]["items"][num]["cantidad"]=int(message.text)
-        pickle.dump(datos,open(f'{DIR["Datos"]}{message.chat.id}','wb'))
+       
         markup = InlineKeyboardMarkup(row_width=MAX_ANCHO_ROW)
         b_si=InlineKeyboardButton("SI",callback_data="SI")
         b_no= InlineKeyboardButton("NO",callback_data="NO")

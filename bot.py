@@ -31,6 +31,7 @@ Users=[]
 Items=[]
 ItemSelect=[]
 
+
 urlApi="https://54.162.178.246:7163"
 #urlApi="https://localhost:7000"
 headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MjExMDExMCwiZXhwIjoxNjkwNzUwMTEwLCJpYXQiOjE2ODIxMTAxMTB9.2b1JcI9hki86F2O545tjmveG71QOGV89IUPOYi8eo38",
@@ -111,7 +112,15 @@ def CrearMensaje(Skus,Pesos):
             for i in range(len(Skus),len(Pesos)):
                 Mensaje+=(Pesos[i]+"\n")
     return Mensaje
-def ActualizarDatos(Skus,Pesos,chatid):
+def ActualizarDatos(message):
+    if(message.text=="/no"):
+        msg = bot.send_message(message.chat.id,"Esperamos su mensaje o /fin para terminar")
+        bot.register_next_step_handler(msg,ActualizarBySMS)
+        return
+    chatid=message.chat.id
+    data=pickle.load(open(f'{DIR["Datos"]}{chatid}','rb'))
+    Skus=data["SKUS"]
+    Pesos=data["Pesos"]
     Mensaje=""
     datos=[]
     for i in range(len(Skus)):
@@ -130,7 +139,25 @@ def ActualizarDatos(Skus,Pesos,chatid):
         bot.send_message(chatid,"Hubo Algun Error en la actualizacion")
         return       
     
+def ActualizarDatos2(Skus,Pesos,chatid):
+    Mensaje=""
+    datos=[]
+    for i in range(len(Skus)):
+        datos.append({"sku":Skus[i],"peso":Pesos[i]})
 
+    result = QueryToApi(f'/api/Item/UpdatePesos',datos,"POST")
+    try:
+        results= list(result)
+        if(len(results)==0):
+            bot.send_message(chatid,"Hubo Algun Error en la actualizacion")
+            return
+        for i in range(len(Skus)):
+            Mensaje+=Skus[i]+" "+Pesos[i]+" "+str(results[i])+"\n"
+        bot.send_message(chatid,Mensaje)
+    except:        
+        bot.send_message(chatid,"Hubo Algun Error en la actualizacion")
+        return
+    
 def ActualizarBySMS(message):
     if(message.text=='/fin'):
         return
@@ -141,7 +168,8 @@ def ActualizarBySMS(message):
         datos = lin.split()
         Skus.append(datos[0])
         Pesos.append(datos[1])
-    return ActualizarDatos(Skus,Pesos,message.chat.id)
+    
+    return ActualizarDatos2(Skus,Pesos,message.chat.id)
 
 def LeerFoto2(message):
     if(message.text=='/stop'):
@@ -252,14 +280,34 @@ def LeerFoto2(message):
             msg = bot.send_message(message.chat.id,"Esperamos su mensaje o /fin para terminar",reply_markup=markup)
             bot.register_next_step_handler(msg,ActualizarBySMS)
         else:
-            ActualizarDatos(SKUS,Pesos,message.chat.id)
+            
+            datos={"SKUS":SKUS,"Pesos":Pesos}
+            pickle.dump(datos,open(f'{DIR["Datos"]}{message.chat.id}','wb'))
+            msg = bot.send_message(message.chat.id,"Escriba /si Para Continuar y /no si requiere modificar algo",reply_markup=markup)
+            bot.register_next_step_handler(msg,ActualizarDatos)
 
     except Exception as ex:
         msg = bot.send_message(message.chat.id,f"Hubo error {ex} con lo que envio Envie otra foto o escriba /text para enviarlo escrito o /fin para terminar",reply_markup=markup)
         bot.register_next_step_handler(msg,LeerFoto2)
 
 
-
+def SearByText(message):
+    if(message.text=='/stop'):
+        return
+    users = QueryToApi(f'/api/Buy/GetItemBuySKU/{message.text}',None,"GET")
+    users = list(users)
+    markup=ForceReply()
+    if(len(users)==0):
+        msg = bot.send_message(message.chat.id,"Escriba Otro Sku EsteTuvo Error",reply_markup=markup)
+        bot.register_next_step_handler(msg,SearByText) 
+    else:
+        mensaje = "<b> Los Nombres Son: \n</b>"
+        for user in users:
+            di = dict(user)
+            mensaje+= f'<b>{di["user"]["userName"]} </b> con la compra <b> {di["buyId"]}</b>\n'
+        bot.reply_to(message,mensaje,parse_mode="html")
+        msg = bot.send_message(message.chat.id,"Escriba Otro Sku",reply_markup=markup)
+        bot.register_next_step_handler(msg,SearByText)
 
 @bot.message_handler(commands=['getpdf'])
 def cmd_GetPdf(message):
@@ -309,13 +357,24 @@ def cmd_UpdatePesos(message):
     msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
     bot.register_next_step_handler(msg,LeerFoto2)
 
+@bot.message_handler(commands=['searchitem'])
+def cmd_UpdatePesos(message):
+    if(not message.chat.id in IDS):
+        bot.reply_to(message,"No Puede Usar Dicho Comando") 
+        return
+    mensaje="Escriba el sku por favor"
+    markup=ForceReply()
+    msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
+    bot.register_next_step_handler(msg,SearByText)
+
 if __name__ == '__main__':
     bot.set_my_commands([
         telebot.types.BotCommand("/stop","Para Parar Cualquier Secuencia de Ejecucuion"),
         telebot.types.BotCommand("/getpdf","Escriba el numero de la compra"),
         telebot.types.BotCommand("/updatepago","Escriba el numero de la compra y el pago separado por esapcios"),
         telebot.types.BotCommand("/updatepeso","Escriba el numero de la compra y el peso separado por esapcios"),
-        telebot.types.BotCommand("/pesosfotos","Actualizar segun la foto de shein")
+        telebot.types.BotCommand("/pesosfotos","Actualizar segun la foto de shein"),
+        telebot.types.BotCommand("/searchitem","BuscarArticulo")
     ])
     print('Iniciando bot')
     if os.environ.get("DYNO_RAM"):
