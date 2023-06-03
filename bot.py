@@ -178,6 +178,9 @@ def LeerFoto2(message):
     try:
         if(message.text=="/fin"):
             return
+        if(message.text=="/text"):
+            msg = bot.send_message(message.chat.id,"Esperamos su mensaje o /fin para terminar",reply_markup=markup)
+            bot.register_next_step_handler(msg,ActualizarBySMS)
     except:
         pass
     try:
