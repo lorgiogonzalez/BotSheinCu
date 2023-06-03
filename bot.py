@@ -21,7 +21,7 @@ import platform
 chunk_size=2000
 N_RES_PAG=15
 MAX_ANCHO_ROW=5
-DIR={"Datos":"./Datos/","Documents":"./documents/"}
+DIR={"Datos":"./Datos/","Documents":"./Datos/"}
 for key in DIR:
     try:
         os.mkdir(key)
