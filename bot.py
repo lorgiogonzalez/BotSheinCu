@@ -370,6 +370,10 @@ def cmd_UpdatePesos(message):
     msg = bot.send_message(message.chat.id,mensaje,reply_markup=markup)
     bot.register_next_step_handler(msg,SearByText)
 
+@bot.message_handler(commands=['start'])
+def cmd_UpdatePesos(message):
+    bot.reply_to(message,message.chat.id)
+
 if __name__ == '__main__':
     bot.set_my_commands([
         telebot.types.BotCommand("/stop","Para Parar Cualquier Secuencia de Ejecucuion"),
@@ -377,7 +381,8 @@ if __name__ == '__main__':
         telebot.types.BotCommand("/updatepago","Escriba el numero de la compra y el pago separado por esapcios"),
         telebot.types.BotCommand("/updatepeso","Escriba el numero de la compra y el peso separado por esapcios"),
         telebot.types.BotCommand("/pesosfotos","Actualizar segun la foto de shein"),
-        telebot.types.BotCommand("/searchitem","BuscarArticulo")
+        telebot.types.BotCommand("/searchitem","BuscarArticulo"),
+        telebot.types.BotCommand("/start","Hola")
     ])
     print('Iniciando bot')
     if os.environ.get("DYNO_RAM"):
