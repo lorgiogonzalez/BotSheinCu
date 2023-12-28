@@ -332,7 +332,7 @@ def cmd_updatepago(message):
         bot.reply_to(message,"No Puede Usar Dicho Comando") 
         return
     results= message.text.split()
-    result = UpdatePago(int(results[1]),float(results[2]))
+    result = UpdatePago(int(results[1]),{"valor":float(results[2])})
     if(result==200):
         bot.send_message(message.chat.id,"Se Actualizo Correctamente")
     else:
