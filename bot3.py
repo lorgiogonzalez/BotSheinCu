@@ -33,7 +33,7 @@ ItemSelect=[]
 
 urlApi="https://54.162.178.246:7163"
 #urlApi="https://localhost:7000"
-headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MjExMDExMCwiZXhwIjoxNjkwNzUwMTEwLCJpYXQiOjE2ODIxMTAxMTB9.2b1JcI9hki86F2O545tjmveG71QOGV89IUPOYi8eo38",
+headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc0ODQ4MTM0MCwiZXhwIjoxNzU3MTIxMzQwLCJpYXQiOjE3NDg0ODEzNDB9.RGL4shbpqYc_wVEfSUlp_RVV_aCk9YPas1tlbagvW78",
 #headers = {"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkxvcmdpbyIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTY4MzQ5NDQ4MCwiZXhwIjoxNjkyMTM0NDgwLCJpYXQiOjE2ODM0OTQ0ODB9.egdPym4nByY1EjnoIYFVGlGvRqFhLJCoWPOV0ps6V0s",
            "accept": "*/*",
            "Content-Type": "application/json"}
